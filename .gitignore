@@ -1,0 +1,37 @@
+# Python and Environment
+__pycache__/
+*.py[cod]
+*$py.class
+*.env
+.venv/
+venv/
+env/
+.pytest_cache/
+
+# Data and Reference Exclusions
+reference/
+*.zip
+
+# Frontend build and dependencies
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# System and IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+
+# Firebase local cache
+.firebase/
+
+# Local Firebase state
+.firebase/
+
+# Generated test output
+frontend/dist-test/
+
+# TypeScript build metadata
+*.tsbuildinfo
