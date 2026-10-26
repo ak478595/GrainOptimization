@@ -59,8 +59,8 @@ export interface SolveResponse {
   scenario_name: string;
   status: string;
   objective_value: number;
-  best_bound: number;
-  relative_gap: number;
+  best_bound: number | null;
+  relative_gap: number | null;
   solve_time_seconds: number;
   total_shifts: number;
   total_production_tonnes: number;

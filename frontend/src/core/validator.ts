@@ -57,7 +57,48 @@ export class SolutionValidator {
     const prodMap = sol.production;
     const shiftMap = sol.shifts;
 
-    // Gate 1: Inoculated JIT demand satisfaction
+    // Check payload existence
+    if (!prodMap || typeof prodMap !== 'object') {
+      violations.push('Payload Violation: Missing or invalid production map');
+      return {
+        is_valid: false,
+        violations_count: violations.length,
+        violations,
+        calculated_labour_cost: 0,
+        calculated_production_cost: 0,
+        calculated_waste_cost: 0,
+        calculated_total_cost: 0,
+      };
+    }
+    if (!shiftMap || typeof shiftMap !== 'object') {
+      violations.push('Payload Violation: Missing or invalid shifts map');
+      return {
+        is_valid: false,
+        violations_count: violations.length,
+        violations,
+        calculated_labour_cost: 0,
+        calculated_production_cost: 0,
+        calculated_waste_cost: 0,
+        calculated_total_cost: 0,
+      };
+    }
+
+    // Domain and non-negativity validation
+    for (const [k, val] of Object.entries(prodMap)) {
+      if (typeof val !== 'number' || Number.isNaN(val)) {
+        violations.push(`Domain Violation: Production entry ${k} is NaN or not a number: ${val}`);
+      } else if (val < -this.tol) {
+        violations.push(`Domain Violation: Negative production in ${k}: ${val}`);
+      }
+    }
+
+    for (const [k, val] of Object.entries(shiftMap)) {
+      if (typeof val !== 'number' || Number.isNaN(val)) {
+        violations.push(`Domain Violation: Shift entry ${k} is NaN or not a number: ${val}`);
+      }
+    }
+
+    // Gate 1: Inoculated JIT demand satisfaction (and over-service check for rigid JIT)
     for (const p of this.data.inoculatedProducts) {
       for (const w of this.data.weeks) {
         let p_w = 0;
@@ -68,6 +109,10 @@ export class SolutionValidator {
         if (p_w < d_w - this.tol) {
           violations.push(
             `Gate 1 Violation (Inoculated JIT unmet): ${p.name}, Week ${w} (Produced: ${p_w.toFixed(3)}, Demand: ${d_w.toFixed(3)})`
+          );
+        } else if (p_w > d_w + this.tol) {
+          violations.push(
+            `Gate 1 Violation (Inoculated JIT over-service): ${p.name}, Week ${w} (Produced: ${p_w.toFixed(3)}, Demand: ${d_w.toFixed(3)})`
           );
         }
       }
@@ -119,7 +164,7 @@ export class SolutionValidator {
       }
     }
 
-    // Gate 5: Warehouse storage bounds
+    // Gate 5: Warehouse storage bounds & inventory non-negativity
     let cum_p_tot = 0;
     let cum_d_tot = 0;
     for (const w of this.data.weeks) {
@@ -130,6 +175,11 @@ export class SolutionValidator {
         cum_d_tot += this.demand[p.name]?.[String(w)] ?? 0;
       }
       const inv = cum_p_tot - cum_d_tot;
+      if (inv < -this.tol) {
+        violations.push(
+          `Gate 5 Violation (Negative warehouse inventory): Week ${w} inventory ${inv.toFixed(3)} < 0`
+        );
+      }
       if (inv > this.data.parameters.storage_capacity + this.tol) {
         violations.push(
           `Gate 5 Violation (Storage limit exceeded): Week ${w} inventory ${inv.toFixed(3)} > ${this.data.parameters.storage_capacity}`
@@ -137,7 +187,7 @@ export class SolutionValidator {
       }
     }
 
-    // Gate 6: Cost Recalculation
+    // Gate 6: Cost Recalculation and objective verification
     let calc_labour = 0;
     for (const l of this.data.lines) {
       for (const w of this.data.weeks) {
@@ -157,7 +207,11 @@ export class SolutionValidator {
     }
 
     const calc_total = calc_labour + calc_prod;
-    if (sol.objective_value !== undefined && Math.abs(calc_total - sol.objective_value) > 0.05) {
+    if (sol.objective_value === undefined || sol.objective_value === null || typeof sol.objective_value !== 'number' || Number.isNaN(sol.objective_value)) {
+      violations.push(
+        'Gate 6 Violation (Missing objective value): Solution payload must provide a numeric objective_value for independent verification'
+      );
+    } else if (Math.abs(calc_total - sol.objective_value) > 0.05) {
       violations.push(
         `Gate 6 Violation (Objective mismatch): Solver ${sol.objective_value.toFixed(2)} != Calculated ${calc_total.toFixed(2)}`
       );
@@ -176,7 +230,7 @@ export class SolutionValidator {
 
   /**
    * Gate 1-6 Expiry-Aware Audit:
-   * Gate 1: Inoculated cohort demand fulfillment (sum_a u[v,s,a] == d[v,s])
+   * Gate 1: Inoculated cohort demand fulfillment & Treated cumulative demand fulfillment
    * Gate 2: Cohort inventory flow conservation & 2-week expiry (I[v,s,2] == 0)
    * Gate 3: Shift integer bounds (0 <= shifts <= 3)
    * Gate 4: Line capacity limits (production <= capacity * hours_per_shift * shifts)
@@ -190,14 +244,65 @@ export class SolutionValidator {
     const wasteMap = sol.waste || {};
     const consumptionMap = sol.consumption || {};
 
-    // Non-negativity check
+    // Check payload existence
+    if (!prodMap || typeof prodMap !== 'object') {
+      violations.push('Payload Violation: Missing or invalid production map');
+      return {
+        is_valid: false,
+        violations_count: violations.length,
+        violations,
+        calculated_labour_cost: 0,
+        calculated_production_cost: 0,
+        calculated_waste_cost: 0,
+        calculated_total_cost: 0,
+      };
+    }
+    if (!shiftMap || typeof shiftMap !== 'object') {
+      violations.push('Payload Violation: Missing or invalid shifts map');
+      return {
+        is_valid: false,
+        violations_count: violations.length,
+        violations,
+        calculated_labour_cost: 0,
+        calculated_production_cost: 0,
+        calculated_waste_cost: 0,
+        calculated_total_cost: 0,
+      };
+    }
+
+    // Domain and non-negativity checks
     for (const [k, val] of Object.entries(prodMap)) {
-      if (val < -this.tol) {
-        violations.push(`Negative production in ${k}: ${val}`);
+      if (typeof val !== 'number' || Number.isNaN(val)) {
+        violations.push(`Domain Violation: Production entry ${k} is NaN or not a number: ${val}`);
+      } else if (val < -this.tol) {
+        violations.push(`Domain Violation: Negative production in ${k}: ${val}`);
       }
     }
 
-    // Gate 1: Inoculated Demand Satisfaction from Eligible Cohorts
+    for (const [k, val] of Object.entries(shiftMap)) {
+      if (typeof val !== 'number' || Number.isNaN(val)) {
+        violations.push(`Domain Violation: Shift entry ${k} is NaN or not a number: ${val}`);
+      }
+    }
+
+    for (const [k, val] of Object.entries(wasteMap)) {
+      if (typeof val !== 'number' || Number.isNaN(val)) {
+        violations.push(`Domain Violation: Waste entry ${k} is NaN or not a number: ${val}`);
+      } else if (val < -this.tol) {
+        violations.push(`Domain Violation: Negative waste in ${k}: ${val}`);
+      }
+    }
+
+    for (const [k, val] of Object.entries(consumptionMap)) {
+      if (typeof val !== 'number' || Number.isNaN(val)) {
+        violations.push(`Domain Violation: Consumption entry ${k} is NaN or not a number: ${val}`);
+      } else if (val < -this.tol) {
+        violations.push(`Domain Violation: Negative consumption in ${k}: ${val}`);
+      }
+    }
+
+    // Gate 1: Demand Satisfaction
+    // Part A: Inoculated Demand Satisfaction from Eligible Cohorts
     for (const p of this.data.inoculatedProducts) {
       for (const w of this.data.weeks) {
         const u0 = consumptionMap[`${p.id},${w},0`] ?? 0;
@@ -208,6 +313,23 @@ export class SolutionValidator {
         if (Math.abs(tot_u - d_w) > this.tol) {
           violations.push(
             `Gate 1 Violation (Inoculated cohort demand mismatch): ${p.name}, Week ${w} (Consumed: ${tot_u.toFixed(3)}, Demand: ${d_w.toFixed(3)})`
+          );
+        }
+      }
+    }
+
+    // Part B: Treated Product Cumulative Demand Satisfaction
+    for (const p of this.data.treatedProducts) {
+      let cum_p = 0;
+      let cum_d = 0;
+      for (const w of this.data.weeks) {
+        for (const l of this.data.lines) {
+          cum_p += prodMap[`${p.id},${l.id},${w}`] ?? 0;
+        }
+        cum_d += this.demand[p.name]?.[String(w)] ?? 0;
+        if (cum_p < cum_d - this.tol) {
+          violations.push(
+            `Gate 1 Violation (Treated cumulative unmet): ${p.name}, Week ${w} (CumProd: ${cum_p.toFixed(3)}, CumDem: ${cum_d.toFixed(3)})`
           );
         }
       }
@@ -288,6 +410,7 @@ export class SolutionValidator {
     }
 
     // Gate 5: Warehouse storage bounds (perishable I_inoc + non-perishable I_treated <= 2700)
+    // AND inventory non-negativity (never clamp negative balances with Math.max)
     for (const w of this.data.weeks) {
       let tot_stock_w = 0;
 
@@ -306,7 +429,13 @@ export class SolutionValidator {
           const wst = wasteMap[`${p.id},${s}`] ?? 0;
           cum_use += u0 + u1 + u2 + wst;
         }
-        tot_stock_w += Math.max(0, cum_prod - cum_use);
+        const stock_p = cum_prod - cum_use;
+        if (stock_p < -this.tol) {
+          violations.push(
+            `Gate 5 Violation (Negative inoculated inventory): ${p.name}, Week ${w} inventory ${stock_p.toFixed(3)} < 0`
+          );
+        }
+        tot_stock_w += stock_p;
       }
 
       // Treated stock
@@ -319,7 +448,13 @@ export class SolutionValidator {
           }
           cum_dem += this.demand[p.name]?.[String(s)] ?? 0;
         }
-        tot_stock_w += Math.max(0, cum_prod - cum_dem);
+        const stock_p = cum_prod - cum_dem;
+        if (stock_p < -this.tol) {
+          violations.push(
+            `Gate 5 Violation (Negative treated inventory): ${p.name}, Week ${w} inventory ${stock_p.toFixed(3)} < 0`
+          );
+        }
+        tot_stock_w += stock_p;
       }
 
       if (tot_stock_w > this.data.parameters.storage_capacity + this.tol) {
@@ -329,7 +464,7 @@ export class SolutionValidator {
       }
     }
 
-    // Gate 6: Cost Recalculation
+    // Gate 6: Cost Recalculation and objective verification
     let calc_labour = 0;
     for (const l of this.data.lines) {
       for (const w of this.data.weeks) {
@@ -355,7 +490,11 @@ export class SolutionValidator {
     const calc_waste = total_waste * this.data.parameters.waste_penalty;
     const calc_total = calc_labour + calc_prod + calc_waste;
 
-    if (sol.objective_value !== undefined && Math.abs(calc_total - sol.objective_value) > 0.05) {
+    if (sol.objective_value === undefined || sol.objective_value === null || typeof sol.objective_value !== 'number' || Number.isNaN(sol.objective_value)) {
+      violations.push(
+        'Gate 6 Violation (Missing objective value): Solution payload must provide a numeric objective_value for independent verification'
+      );
+    } else if (Math.abs(calc_total - sol.objective_value) > 0.05) {
       violations.push(
         `Gate 6 Violation (Objective mismatch): Solver ${sol.objective_value.toFixed(2)} != Calculated ${calc_total.toFixed(2)}`
       );

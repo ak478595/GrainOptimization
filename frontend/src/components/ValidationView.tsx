@@ -11,6 +11,57 @@ export const ValidationView: React.FC<ValidationViewProps> = ({ solution }) => {
   const isValid = solution?.validation?.is_valid ?? null;
   const violations = solution?.validation?.violations || [];
 
+  const gate1Violations = violations.filter(v => v.includes('Gate 1'));
+  const gate2Violations = violations.filter(v => v.includes('Gate 2'));
+  const gate3Violations = violations.filter(v => v.includes('Gate 3'));
+  const gate4Violations = violations.filter(v => v.includes('Gate 4'));
+  const gate5Violations = violations.filter(v => v.includes('Gate 5'));
+  const gate6Violations = violations.filter(v => v.includes('Gate 6'));
+
+  const renderBadge = (gateViolations: string[]) => {
+    if (!solution) {
+      return (
+        <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+          Awaiting Run
+        </span>
+      );
+    }
+    if (gateViolations.length === 0) {
+      return (
+        <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+          Verified
+        </span>
+      );
+    }
+    return (
+      <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-rose-50 text-rose-800 border border-rose-200">
+        Failed ({gateViolations.length})
+      </span>
+    );
+  };
+
+  const renderIcon = (gateViolations: string[]) => {
+    if (!solution) {
+      return (
+        <div className="p-1 rounded-lg bg-slate-100 text-slate-600 border border-slate-200 mt-0.5 flex-shrink-0 shadow-soft-xs">
+          <ShieldCheck className="w-4 h-4" />
+        </div>
+      );
+    }
+    if (gateViolations.length === 0) {
+      return (
+        <div className="p-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 mt-0.5 flex-shrink-0 shadow-soft-xs">
+          <Check className="w-4 h-4" />
+        </div>
+      );
+    }
+    return (
+      <div className="p-1 rounded-lg bg-rose-100 text-rose-800 border border-rose-200 mt-0.5 flex-shrink-0 shadow-soft-xs">
+        <AlertCircle className="w-4 h-4" />
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       {/* Banner */}
@@ -77,11 +128,19 @@ export const ValidationView: React.FC<ValidationViewProps> = ({ solution }) => {
             </div>
             <div className="soft-well p-3.5 rounded-xl border border-slate-200">
               <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block mb-0.5">Termination Status</span>
-              <span className="text-emerald-800 font-bold text-base">{solution.status}</span>
+              <span className="text-emerald-800 font-bold text-base">
+                {solution.status === 'Optimal' && solution.relative_gap > 0
+                  ? `Feasible (${(solution.relative_gap * 100).toFixed(1)}% Gap)`
+                  : solution.status}
+              </span>
             </div>
             <div className="soft-well p-3.5 rounded-xl border border-slate-200">
               <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block mb-0.5">Relative MIP Gap</span>
-              <span className="text-slate-900 font-bold text-base font-mono tabular-nums">{(solution.relative_gap * 100).toFixed(2)}%</span>
+              <span className="text-slate-900 font-bold text-base font-mono tabular-nums">
+                {solution.relative_gap !== null && solution.relative_gap !== undefined
+                  ? `${(solution.relative_gap * 100).toFixed(2)}%`
+                  : 'Unavailable'}
+              </span>
             </div>
             <div className="soft-well p-3.5 rounded-xl border border-slate-200">
               <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block mb-0.5">Execution Duration</span>
@@ -101,13 +160,11 @@ export const ValidationView: React.FC<ValidationViewProps> = ({ solution }) => {
         <div className="space-y-3.5 text-sm">
           {/* Gate 1 */}
           <div className="soft-well p-4 rounded-xl border border-slate-200 flex items-start gap-3.5">
-            <div className="p-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 mt-0.5 flex-shrink-0 shadow-soft-xs">
-              <Check className="w-4 h-4" />
-            </div>
+            {renderIcon(gate1Violations)}
             <div className="flex-1">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-bold text-slate-900 block text-sm">Gate 1: Exact Horizon Demand Conservation</span>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">Verified</span>
+                {renderBadge(gate1Violations)}
               </div>
               <p className="text-slate-700 mt-1 leading-relaxed text-sm">
                 Every unit of customer demand across 17 products and 19 weeks is satisfied without stockouts (<MathFormula math="\sum \text{Demand} = 12,556.0\text{ t}" />).
@@ -117,13 +174,11 @@ export const ValidationView: React.FC<ValidationViewProps> = ({ solution }) => {
 
           {/* Gate 2 */}
           <div className="soft-well p-4 rounded-xl border border-slate-200 flex items-start gap-3.5">
-            <div className="p-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 mt-0.5 flex-shrink-0 shadow-soft-xs">
-              <Check className="w-4 h-4" />
-            </div>
+            {renderIcon(gate2Violations)}
             <div className="flex-1">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-bold text-slate-900 block text-sm">Gate 2: Inoculated Cohort Flow & Expiry Conservation</span>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">Verified</span>
+                {renderBadge(gate2Violations)}
               </div>
               <p className="text-slate-700 mt-1 leading-relaxed text-sm">
                 Stock produced in week <MathFormula math="s" /> is strictly consumed at age 0, age 1, age 2, or accounted for as waste <MathFormula math="W_{v,s}" />. Age-2 carryover <MathFormula math="I_{v,s,2} = 0" /> strictly verified.
@@ -133,64 +188,56 @@ export const ValidationView: React.FC<ValidationViewProps> = ({ solution }) => {
 
           {/* Gate 3 */}
           <div className="soft-well p-4 rounded-xl border border-slate-200 flex items-start gap-3.5">
-            <div className="p-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 mt-0.5 flex-shrink-0 shadow-soft-xs">
-              <Check className="w-4 h-4" />
-            </div>
+            {renderIcon(gate3Violations)}
             <div className="flex-1">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-bold text-slate-900 block text-sm">Gate 3: Line Hours & Shift Capacity</span>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">Verified</span>
+                <span className="font-bold text-slate-900 block text-sm">Gate 3: Shift Bounds & Integrality</span>
+                {renderBadge(gate3Violations)}
               </div>
               <p className="text-slate-700 mt-1 leading-relaxed text-sm">
-                Weekly shift totals on Line 1 and Line 2 do not exceed 2 regular and 1 overtime shift (<MathFormula math="\le 3\text{ shifts/line/week}" />) and facility aggregate <MathFormula math="\le 3\text{ shifts/week}" />.
+                Weekly shift totals on Line 1 and Line 2 do not exceed maximum operational capacity (<MathFormula math="\le 3\text{ shifts/line/week}" />) and are strictly integer-valued.
               </p>
             </div>
           </div>
 
           {/* Gate 4 */}
           <div className="soft-well p-4 rounded-xl border border-slate-200 flex items-start gap-3.5">
-            <div className="p-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 mt-0.5 flex-shrink-0 shadow-soft-xs">
-              <Check className="w-4 h-4" />
-            </div>
+            {renderIcon(gate4Violations)}
             <div className="flex-1">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-bold text-slate-900 block text-sm">Gate 4: Facility Aggregate Storage Bounds</span>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">Verified</span>
+                <span className="font-bold text-slate-900 block text-sm">Gate 4: Production Line Capacity</span>
+                {renderBadge(gate4Violations)}
               </div>
               <p className="text-slate-700 mt-1 leading-relaxed text-sm">
-                Weekly physical inventory for treated and inoculated products does not exceed aggregate warehouse silos (<MathFormula math="\le 2,700\text{ t}" />).
+                Total weekly production on each line cannot exceed available processing time (<MathFormula math="\text{Prod}_{l,w} \le \text{rate}_l \times \text{hours} \times \text{shifts}_{l,w}" />).
               </p>
             </div>
           </div>
 
           {/* Gate 5 */}
           <div className="soft-well p-4 rounded-xl border border-slate-200 flex items-start gap-3.5">
-            <div className="p-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 mt-0.5 flex-shrink-0 shadow-soft-xs">
-              <Check className="w-4 h-4" />
-            </div>
+            {renderIcon(gate5Violations)}
             <div className="flex-1">
               <div className="flex items-center justify-between gap-2">
-                <span className="font-bold text-slate-900 block text-sm">Gate 5: Non-Negativity & Integrality</span>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">Verified</span>
+                <span className="font-bold text-slate-900 block text-sm">Gate 5: Warehouse Storage Bounds & Non-Negativity</span>
+                {renderBadge(gate5Violations)}
               </div>
               <p className="text-slate-700 mt-1 leading-relaxed text-sm">
-                All production, inventory, and demand fulfillment variables are non-negative; shift variables are strictly integer.
+                Weekly physical inventory does not exceed aggregate warehouse storage (<MathFormula math="\le 2,700\text{ t}" />) and closing stock balances are non-negative (<MathFormula math="I_w \ge 0" />).
               </p>
             </div>
           </div>
 
           {/* Gate 6 */}
           <div className="soft-well p-4 rounded-xl border border-slate-200 flex items-start gap-3.5">
-            <div className="p-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 mt-0.5 flex-shrink-0 shadow-soft-xs">
-              <Check className="w-4 h-4" />
-            </div>
+            {renderIcon(gate6Violations)}
             <div className="flex-1">
               <div className="flex items-center justify-between gap-2">
                 <span className="font-bold text-slate-900 block text-sm">Gate 6: Objective Cost Reconciliation</span>
-                <span className="text-xs font-bold px-2.5 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">Verified</span>
+                {renderBadge(gate6Violations)}
               </div>
               <p className="text-slate-700 mt-1 leading-relaxed text-sm">
-                Independent recomputation of regular labor, overtime labor, holding costs, and waste penalty matches solver objective within numerical tolerance (<MathFormula math="|\Delta| < 0.01" />).
+                Independent recomputation of regular labor, overtime labor, and waste penalty matches solver objective within numerical tolerance (<MathFormula math="|\Delta| \le \$0.05" />).
               </p>
             </div>
           </div>

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "test": "node ./node_modules/typescript/bin/tsc -p tsconfig.test.json && node dist-test/tests/core_test.js && node dist-test/tests/waste_regression_test.js && node dist-test/tests/test_full_models.js && node dist-test/tests/adversarial_validator_test.js && node dist-test/tests/scenario_lab_telemetry_test.js && node dist-test/tests/solver_correctness_telemetry_test.js",
     "lint": "eslint .",
     "preview": "vite preview"
   },

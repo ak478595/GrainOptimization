@@ -8,6 +8,9 @@ interface ComparisonViewProps {
   initialSolutions?: Record<string, SolveResponse>;
 }
 
+const BENCHMARK_GAP_REL = 0.05;
+const BENCHMARK_TIME_LIMIT_SEC = 120;
+
 export const ComparisonView: React.FC<ComparisonViewProps> = () => {
   const [loadingMap, setLoadingMap] = useState<Record<string, boolean>>({});
   const [errorMap, setErrorMap] = useState<Record<string, string | null>>({});
@@ -60,8 +63,8 @@ export const ComparisonView: React.FC<ComparisonViewProps> = () => {
       const res = await solveModel({
         model_type: exp.model_type,
         scenario_name: exp.scenario_name,
-        gap_rel: 0.05,
-        time_limit_sec: 120,
+        gap_rel: BENCHMARK_GAP_REL,
+        time_limit_sec: BENCHMARK_TIME_LIMIT_SEC,
       });
       setSolutions((prev) => ({ ...prev, [expId]: res }));
     } catch (err: any) {
@@ -108,6 +111,14 @@ export const ComparisonView: React.FC<ComparisonViewProps> = () => {
           <p className="text-sm text-slate-600 mt-1.5 ml-1">
             Factorial comparative matrix: Baseline vs Expiry-Aware formulations across Flat and Seasonal harvest demand profiles.
           </p>
+          <div className="flex items-center gap-2 mt-2 ml-1">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+              Benchmark Configuration: Fixed {(BENCHMARK_GAP_REL * 100).toFixed(1)}% MIP Gap · {BENCHMARK_TIME_LIMIT_SEC}s Time Limit
+            </span>
+            <span className="text-xs text-slate-500 italic">
+              (Independent of Overview &amp; Solver controls)
+            </span>
+          </div>
         </div>
         <button
           onClick={runAll}
@@ -233,20 +244,27 @@ export const ComparisonView: React.FC<ComparisonViewProps> = () => {
                       <div>
                         <span className="text-slate-600 font-medium">Best Dual Bound:</span>{' '}
                         <span className="text-slate-900 font-mono font-bold tabular-nums">
-                          ${sol.best_bound.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          {sol.best_bound !== null && sol.best_bound !== undefined
+                            ? `$${sol.best_bound.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                            : 'Unavailable'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-slate-600 font-medium">Relative Gap:</span>{' '}
+                        <span className="text-slate-600 font-medium">Achieved Gap:</span>{' '}
                         <span className="text-slate-900 font-mono font-bold tabular-nums">
-                          {(sol.relative_gap * 100).toFixed(2)}%
+                          {sol.relative_gap !== null && sol.relative_gap !== undefined
+                            ? `${(sol.relative_gap * 100).toFixed(2)}%`
+                            : 'Unavailable'}
+                        </span>
+                        <span className="text-xs text-slate-500 block font-sans">
+                          (Tolerance: {(BENCHMARK_GAP_REL * 100).toFixed(1)}%)
                         </span>
                       </div>
                     </div>
                   </div>
                 ) : (
                   <div className="p-6 rounded-2xl soft-well text-center text-sm text-slate-500 font-medium">
-                    Scenario ready for optimization. Click play to execute solver.
+                    Benchmark scenario ready for execution. Click play to solve with {(BENCHMARK_GAP_REL * 100).toFixed(1)}% gap tolerance.
                   </div>
                 )}
               </div>
@@ -254,9 +272,31 @@ export const ComparisonView: React.FC<ComparisonViewProps> = () => {
               {sol && (
                 <div className="mt-4 pt-3.5 border-t border-slate-200 flex flex-wrap items-center justify-between text-xs sm:text-sm text-slate-600 gap-2">
                   <span className="font-mono font-medium">Solve Duration: {sol.solve_time_seconds.toFixed(2)}s</span>
-                  <span className="flex items-center gap-1.5 font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" /> Status: {sol.status}
-                  </span>
+                  {sol.status === 'Optimal' && (sol.relative_gap === null || sol.relative_gap === 0) ? (
+                    <span className="flex items-center gap-1.5 font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" /> Status: Proven Optimal
+                    </span>
+                  ) : sol.status === 'Optimal' ? (
+                    <span className="flex items-center gap-1.5 font-bold text-teal-800 bg-teal-50 px-2.5 py-0.5 rounded-full border border-teal-200">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-teal-700" /> Status: Feasible — optimality not proven
+                    </span>
+                  ) : sol.status.includes('Time Limit') ? (
+                    <span className="flex items-center gap-1.5 font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-700" /> Status: Time Limit Reached
+                    </span>
+                  ) : sol.status.includes('Iteration Limit') ? (
+                    <span className="flex items-center gap-1.5 font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-700" /> Status: Iteration Limit Reached
+                    </span>
+                  ) : sol.status.includes('Interrupted') ? (
+                    <span className="flex items-center gap-1.5 font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">
+                      <AlertCircle className="w-3.5 h-3.5 text-amber-700" /> Status: Interrupted
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1.5 font-bold text-slate-800 bg-slate-100 px-2.5 py-0.5 rounded-full border border-slate-200">
+                      Status: {sol.status}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
@@ -297,7 +337,7 @@ export const ComparisonView: React.FC<ComparisonViewProps> = () => {
         <div className="soft-card p-6">
           <div className="mb-4">
             <h3 className="text-base font-bold text-slate-900 tracking-tight">Total Facility Operating Cost ($)</h3>
-            <p className="text-sm text-slate-600 mt-0.5">Regular labor, overtime, and holding costs</p>
+            <p className="text-sm text-slate-600 mt-0.5">Direct labour, production volume, and waste penalty costs</p>
           </div>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">

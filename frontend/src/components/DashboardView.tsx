@@ -217,8 +217,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="text-xl sm:text-2xl font-extrabold text-slate-900 mt-2 tabular-nums">
               ${currentSolution.objective_value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
-            <div className="text-xs text-slate-600 mt-1.5 truncate tabular-nums font-medium" title={`Best bound: $${currentSolution.best_bound.toFixed(2)}`}>
-              Bound: ${currentSolution.best_bound.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <div className="text-xs text-slate-600 mt-1.5 truncate tabular-nums font-medium" title={currentSolution.best_bound ? `Best bound: $${currentSolution.best_bound.toFixed(2)}` : 'Bound: Unavailable'}>
+              {currentSolution.best_bound ? `Bound: $${currentSolution.best_bound.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'Bound: Unavailable'}
             </div>
           </div>
 
@@ -229,7 +229,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               <Sparkles className="w-4 h-4 text-amber-700" />
             </div>
             <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2 tabular-nums">
-              {(currentSolution.relative_gap * 100).toFixed(2)}%
+              {currentSolution.relative_gap !== null && currentSolution.relative_gap !== undefined
+                ? `${(currentSolution.relative_gap * 100).toFixed(2)}%`
+                : 'Unavailable'}
             </div>
             <div className="text-xs text-slate-600 mt-1.5 tabular-nums font-medium">
               Tolerance: {(gapRel * 100).toFixed(1)}%

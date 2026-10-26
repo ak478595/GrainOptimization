@@ -63,6 +63,44 @@ export class HighsSolverClient {
   }
 
   /**
+   * Performs an asynchronous readiness/health check by running a minimal 1-variable LP
+   * inside the HiGHS Web Worker to verify initialization.
+   */
+  public async checkHealth(): Promise<{ status: string; solver_available: boolean }> {
+    try {
+      const worker = this.initWorker();
+      const id = `health_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const timeoutMs = 8000;
+
+      const response = await new Promise<SolverWorkerResponse>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          this.pendingRequests.delete(id);
+          reject(new Error('HiGHS worker health check timed out'));
+        }, timeoutMs);
+
+        this.pendingRequests.set(id, { resolve, reject, timer });
+
+        const req: SolverWorkerRequest = {
+          id,
+          action: 'health_check',
+        };
+        worker.postMessage(req);
+      });
+
+      return {
+        status: response.success ? 'healthy' : 'unhealthy',
+        solver_available: response.success,
+      };
+    } catch (err: any) {
+      console.warn('HiGHS worker health check failed:', err);
+      return {
+        status: 'unhealthy',
+        solver_available: false,
+      };
+    }
+  }
+
+  /**
    * Terminate and destroy worker (e.g. on unmount or hard reset).
    */
   public terminate() {
@@ -112,6 +150,12 @@ export class HighsSolverClient {
       throw new Error(response.error || 'Solver returned an unsuccessful status');
     }
 
+    if (!response.solution.hasFeasibleSolution || response.solution.objectiveValue === null) {
+      throw new Error(
+        `Solver terminated without a feasible solution. Status: ${response.solution.status}`
+      );
+    }
+
     return response.solution;
   }
 
@@ -134,6 +178,10 @@ export class HighsSolverClient {
       timeLimitSeconds: options.timeLimitSeconds ?? 120,
       relativeGap: options.relativeGap ?? 0.05,
     });
+
+    if (!rawSol.hasFeasibleSolution || rawSol.objectiveValue === null) {
+      throw new Error(`Optimization ended without a feasible solution (Status: ${rawSol.status})`);
+    }
 
     // Maps for validation and output schemas
     const prodMap: Record<string, number> = {};
@@ -304,8 +352,14 @@ export class HighsSolverClient {
       scenario_name: options.scenario,
       status: rawSol.status,
       objective_value: Math.round(rawSol.objectiveValue * 100) / 100,
-      best_bound: rawSol.bestBound !== null ? Math.round(rawSol.bestBound * 100) / 100 : 0,
-      relative_gap: rawSol.relativeGap ?? 0,
+      best_bound:
+        rawSol.bestBound != null && Number.isFinite(rawSol.bestBound)
+          ? Math.round(rawSol.bestBound * 100) / 100
+          : null,
+      relative_gap:
+        rawSol.relativeGap != null && Number.isFinite(rawSol.relativeGap)
+          ? rawSol.relativeGap
+          : null,
       solve_time_seconds: Math.round(rawSol.solveTimeSeconds * 1000) / 1000,
       total_shifts: totalShiftsCount,
       total_production_tonnes: Math.round(totalProductionTonnes * 1000) / 1000,

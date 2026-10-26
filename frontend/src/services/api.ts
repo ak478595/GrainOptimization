@@ -6,11 +6,11 @@ import { SolutionValidator } from '../core/validator';
 
 /**
  * Health check in standalone mode:
- * Since GrainOpt 2.0 now runs entirely locally within WebAssembly,
- * the optimization engine is directly verified and available.
+ * Performs an active initialization check on the HiGHS WASM solver worker
+ * and reports genuine readiness.
  */
 export async function checkHealth(): Promise<{ status: string; solver_available: boolean }> {
-  return { status: 'healthy', solver_available: true };
+  return await highsSolverClient.checkHealth();
 }
 
 /**
