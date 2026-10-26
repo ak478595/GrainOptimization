@@ -7,7 +7,6 @@ import {
   Layers, 
   GitCompare, 
   BookOpen, 
-  CheckCircle2,
   AlertTriangle
 } from './icons';
 
@@ -38,48 +37,59 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, solverA
   ];
 
   return (
-    <header className="bg-slate-900/90 backdrop-blur border-b border-slate-800 sticky top-0 z-50">
+    <header className="bg-soft-base/90 backdrop-blur-md border-b border-soft-border/80 sticky top-0 z-50 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-tr from-emerald-600 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-              <span className="text-xl font-bold text-white tracking-wider">G2</span>
+        <div className="flex items-center justify-between h-16 sm:h-20">
+          {/* Logo & Identity */}
+          <div className="flex items-center space-x-3.5">
+            <div className="w-11 h-11 rounded-soft-lg bg-gradient-to-tr from-brand-700 via-brand-600 to-teal-400 flex items-center justify-center shadow-soft-sm border border-white/60 flex-shrink-0">
+              <span className="text-xl font-extrabold text-white tracking-wider">G2</span>
             </div>
             <div>
               <div className="flex items-center space-x-2">
-                <span className="text-lg font-bold tracking-tight text-white">GrainOpt 2.0</span>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 font-mono">
-                  MILP Engine
+                <span className="text-xl font-bold tracking-tight text-slate-900">GrainOpt 2.0</span>
+                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-800 border border-teal-200/80 font-mono shadow-sm">
+                  HiGHS Wasm
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Seasonal-Demand & Perishable-Ageing Optimization</p>
+              <p className="text-xs sm:text-sm text-slate-600 font-medium hidden sm:block">
+                Seasonal-Demand &amp; Perishable-Ageing Mixed-Integer Optimization
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2 text-xs">
-              <span className="text-slate-400">CBC Solver Status:</span>
+          {/* Engine Status Chip */}
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 text-sm">
+              <span className="text-slate-600 font-semibold hidden md:inline">Solver:</span>
               {solverAvailable === true ? (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-900/50 text-emerald-300 border border-emerald-700/50">
-                  <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-400" />
-                  Ready (Win64)
-                </span>
+                <div 
+                  className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-soft-sm"
+                  title="HiGHS WebAssembly client-side optimization engine is initialized and ready"
+                >
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse mr-2 flex-shrink-0" />
+                  <span className="tabular-nums">WASM Ready (Offline)</span>
+                </div>
               ) : solverAvailable === false ? (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-rose-900/50 text-rose-300 border border-rose-700/50">
-                  <AlertTriangle className="w-3 h-3 mr-1 text-rose-400" />
-                  Unavailable
-                </span>
+                <div className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold bg-rose-50 text-rose-800 border border-rose-200 shadow-soft-sm">
+                  <AlertTriangle className="w-4 h-4 mr-1.5 text-rose-600" />
+                  <span>Unavailable</span>
+                </div>
               ) : (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-800 text-slate-400">
-                  Connecting...
-                </span>
+                <div className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold bg-slate-100 text-slate-700 border border-slate-200 shadow-soft-sm">
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-400 animate-ping mr-2" />
+                  <span>Loading...</span>
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Tab Navigation */}
-        <nav className="flex space-x-1 overflow-x-auto pb-2 scrollbar-none">
+        {/* Tab Navigation Scrub Bar */}
+        <nav 
+          className="flex space-x-2 overflow-x-auto pb-3 pt-1 scrollbar-none"
+          aria-label="Navigation Tabs"
+        >
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -87,13 +97,14 @@ export const Navbar: React.FC<NavbarProps> = ({ activeTab, setActiveTab, solverA
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as NavTab)}
-                className={`flex items-center space-x-2 px-3 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all duration-150 ${
+                aria-current={isActive ? 'page' : undefined}
+                className={`flex items-center space-x-2 px-4 py-2 text-xs sm:text-sm font-semibold rounded-soft whitespace-nowrap transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 ${
                   isActive
-                    ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    ? 'bg-soft-card text-teal-800 shadow-soft-md border border-teal-500/40 font-bold'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-soft-card/80 border border-transparent'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-emerald-400' : 'text-slate-500'}`} />
+                <Icon className={`w-4 h-4 flex-shrink-0 ${isActive ? 'text-teal-700' : 'text-slate-500'}`} />
                 <span>{tab.label}</span>
               </button>
             );

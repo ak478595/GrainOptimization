@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { DatasetInfo } from '../types/api';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from 'recharts';
-import { Database, Filter, AlertCircle, Info } from './icons';
+import { Database, Filter } from './icons';
 
 interface DatasetViewProps {
   dataset: DatasetInfo | null;
@@ -13,8 +13,8 @@ export const DatasetView: React.FC<DatasetViewProps> = ({ dataset }) => {
 
   if (!dataset) {
     return (
-      <div className="p-8 text-center text-slate-400">
-        Loading dataset metadata from backend...
+      <div className="soft-card p-12 text-center text-slate-600 font-semibold text-base">
+        Loading dataset metadata from browser storage...
       </div>
     );
   }
@@ -60,54 +60,68 @@ export const DatasetView: React.FC<DatasetViewProps> = ({ dataset }) => {
   return (
     <div className="space-y-6">
       {/* Header Banner */}
-      <div className="p-5 rounded-2xl bg-slate-800/60 border border-slate-700/60 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="soft-card p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Database className="w-5 h-5 text-emerald-400" />
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
+            <span className="p-2 rounded-xl bg-teal-50 border border-teal-200 text-teal-700 shadow-soft-xs">
+              <Database className="w-5 h-5" />
+            </span>
             Industrial Grain Facility Dataset
           </h2>
-          <p className="text-xs text-slate-400 mt-1">
-            Empirical demand, processing lines, and holding capacities from Bayá et al. (2022).
+          <p className="text-sm text-slate-600 mt-1.5 ml-1">
+            Empirical demand, dual processing lines, and holding capacities from Bayá et al. (2022).
           </p>
         </div>
-        <div className="flex items-center gap-4 text-xs">
-          <div className="bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-700/50">
-            <span className="text-slate-400">Total Horizon Demand: </span>
-            <span className="font-bold text-emerald-400">{dataset.total_demand_tonnes.toLocaleString()} t</span>
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <div className="soft-well px-4 py-2 rounded-xl border border-slate-200">
+            <span className="text-slate-600 font-semibold">Horizon Demand: </span>
+            <span className="font-bold text-teal-800 tabular-nums">{dataset.total_demand_tonnes.toLocaleString()} t</span>
           </div>
-          <div className="bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-700/50">
-            <span className="text-slate-400">Active Lines: </span>
-            <span className="font-bold text-emerald-400">2 Production Lines</span>
+          <div className="soft-well px-4 py-2 rounded-xl border border-slate-200">
+            <span className="text-slate-600 font-semibold">Active Processing: </span>
+            <span className="font-bold text-slate-800">2 Dual Lines</span>
           </div>
         </div>
       </div>
 
       {/* Demand Bar Chart */}
-      <div className="p-5 rounded-2xl bg-slate-800/60 border border-slate-700/60">
-        <div className="flex items-center justify-between mb-4">
+      <div className="soft-card p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
           <div>
-            <h3 className="text-base font-semibold text-white">Aggregated Weekly Demand Profile</h3>
-            <p className="text-xs text-slate-400">Treated (unlimited shelf-life) vs Inoculated (2-week perishable limit)</p>
+            <h3 className="text-base font-bold text-slate-900 tracking-tight">Aggregated Weekly Demand Profile</h3>
+            <p className="text-sm text-slate-600 mt-0.5">Treated (unlimited shelf-life) vs Inoculated (2-week perishable limit)</p>
           </div>
-          <div className="text-xs text-slate-400 flex items-center gap-2">
-            <span className="w-3 h-3 bg-emerald-500 rounded-sm inline-block"></span> Inoculated
-            <span className="w-3 h-3 bg-blue-500 rounded-sm inline-block ml-2"></span> Treated
+          <div className="text-xs sm:text-sm text-slate-700 flex items-center gap-4 bg-slate-50 px-3.5 py-1.5 rounded-lg border border-slate-200">
+            <span className="flex items-center gap-2 font-semibold">
+              <span className="w-3 h-3 bg-teal-700 rounded-sm inline-block shadow-soft-xs"></span> Inoculated
+            </span>
+            <span className="flex items-center gap-2 font-semibold">
+              <span className="w-3 h-3 bg-sky-700 rounded-sm inline-block shadow-soft-xs"></span> Treated
+            </span>
           </div>
         </div>
 
         <div className="h-64 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={weeklyDemandData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="week" stroke="#94a3b8" fontSize={11} />
-              <YAxis stroke="#94a3b8" fontSize={11} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#CBD5E1" opacity={0.6} />
+              <XAxis dataKey="week" stroke="#475569" fontSize={12} tickLine={false} />
+              <YAxis stroke="#475569" fontSize={12} tickLine={false} />
               <Tooltip 
-                contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', borderRadius: '0.5rem', color: '#f8fafc' }}
+                contentStyle={{ 
+                  backgroundColor: '#FFFFFF', 
+                  borderColor: '#CBD5E1', 
+                  borderRadius: '0.75rem', 
+                  boxShadow: '0 8px 20px -4px rgba(15, 23, 42, 0.1)',
+                  color: '#0F172A',
+                  fontSize: '12px',
+                  fontWeight: 600
+                }}
                 formatter={(value: any) => [`${value} tonnes`, '']}
               />
-              <Legend wrapperStyle={{ fontSize: 12 }} />
-              <Bar dataKey="inoculated" fill="#10b981" name="Inoculated Demand (t)" stackId="a" />
-              <Bar dataKey="treated" fill="#3b82f6" name="Treated Demand (t)" stackId="a" />
+              <Legend wrapperStyle={{ fontSize: 12, paddingTop: '10px' }} />
+              <Bar dataKey="inoculated" fill="#0D9488" name="Inoculated Demand (t)" stackId="a" radius={[0, 0, 0, 0]} />
+              <Bar dataKey="treated" fill="#0284C7" name="Treated Demand (t)" stackId="a" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -116,37 +130,39 @@ export const DatasetView: React.FC<DatasetViewProps> = ({ dataset }) => {
       {/* Production Lines Matrix */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {dataset.lines.map((line) => (
-          <div key={line.id} className="p-5 rounded-2xl bg-slate-800/60 border border-slate-700/60">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-semibold text-white">{line.name}</h3>
-              <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-700 text-slate-300">
-                {line.hours_per_shift} hrs / shift
-              </span>
-            </div>
-            <div className="grid grid-cols-3 gap-3 text-xs mb-4">
-              <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/40">
-                <span className="text-slate-400 block">Reg. Hourly Cost</span>
-                <span className="text-slate-200 font-bold">${line.regular_hourly_cost.toFixed(2)}/h</span>
+          <div key={line.id} className="soft-card p-6 flex flex-col justify-between">
+            <div>
+              <div className="flex items-center justify-between mb-3.5">
+                <h3 className="text-base font-bold text-slate-900 tracking-tight">{line.name}</h3>
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-teal-50 text-teal-800 border border-teal-200 shadow-soft-xs">
+                  {line.hours_per_shift} hrs / shift
+                </span>
               </div>
-              <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/40">
-                <span className="text-slate-400 block">OT Hourly Cost</span>
-                <span className="text-slate-200 font-bold">${line.overtime_hourly_cost.toFixed(2)}/h</span>
+              <div className="grid grid-cols-3 gap-3 text-xs sm:text-sm mb-4">
+                <div className="soft-well p-3 rounded-xl border border-slate-200">
+                  <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block mb-0.5">Reg. Hourly</span>
+                  <span className="text-sm font-bold text-slate-900 tabular-nums">${line.regular_hourly_cost.toFixed(2)}/h</span>
+                </div>
+                <div className="soft-well p-3 rounded-xl border border-slate-200">
+                  <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block mb-0.5">OT Hourly</span>
+                  <span className="text-sm font-bold text-slate-900 tabular-nums">${line.overtime_hourly_cost.toFixed(2)}/h</span>
+                </div>
+                <div className="soft-well p-3 rounded-xl border border-slate-200">
+                  <span className="text-xs font-bold text-slate-600 uppercase tracking-wider block mb-0.5">Max Weekly</span>
+                  <span className="text-sm font-bold text-teal-800 tabular-nums">{line.max_shifts_per_week} shifts</span>
+                </div>
               </div>
-              <div className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-700/40">
-                <span className="text-slate-400 block">Max Weekly Shifts</span>
-                <span className="text-slate-200 font-bold">{line.max_shifts_per_week}</span>
-              </div>
-            </div>
 
-            <div className="text-xs">
-              <h4 className="font-semibold text-slate-300 mb-2">Throughput Capacities (Tonnes / Shift):</h4>
-              <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
-                {Object.entries(line.rates).map(([prod, rate]) => (
-                  <div key={prod} className="flex justify-between py-1 border-b border-slate-700/30 text-slate-400">
-                    <span>{prod}</span>
-                    <span className="font-mono text-slate-200">{rate} t/shift</span>
-                  </div>
-                ))}
+              <div className="text-sm">
+                <h4 className="font-bold text-slate-800 mb-2 tracking-tight">Throughput Capacities (Tonnes / Shift):</h4>
+                <div className="max-h-48 overflow-y-auto space-y-1.5 pr-2 soft-well p-3 rounded-xl border border-slate-200">
+                  {Object.entries(line.rates).map(([prod, rate]) => (
+                    <div key={prod} className="flex justify-between items-center py-1 border-b border-slate-200 last:border-0 text-slate-700">
+                      <span className="font-semibold text-slate-800">{prod}</span>
+                      <span className="font-mono font-bold text-slate-900 tabular-nums">{rate} t/shift</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
@@ -154,19 +170,21 @@ export const DatasetView: React.FC<DatasetViewProps> = ({ dataset }) => {
       </div>
 
       {/* Product Table with Filters */}
-      <div className="p-5 rounded-2xl bg-slate-800/60 border border-slate-700/60">
+      <div className="soft-card p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div>
-            <h3 className="text-base font-semibold text-white">SKU Inventory & Demand Breakdown</h3>
-            <p className="text-xs text-slate-400">Total volume and holding parameters for all 17 facility products</p>
+            <h3 className="text-base font-bold text-slate-900 tracking-tight">SKU Inventory & Demand Breakdown</h3>
+            <p className="text-sm text-slate-600 mt-0.5">Total volume and holding parameters for all 17 facility products</p>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 text-xs">
-              <Filter className="w-4 h-4 text-slate-400" />
+            <div className="flex items-center gap-2 text-sm">
+              <Filter className="w-4 h-4 text-slate-600" />
+              <label htmlFor="sku-type-filter" className="sr-only">Filter SKU Type</label>
               <select
+                id="sku-type-filter"
                 value={selectedType}
                 onChange={(e) => setSelectedType(e.target.value)}
-                className="bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200 text-xs"
+                className="soft-well border border-slate-200 rounded-xl px-3.5 py-1.5 text-slate-800 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-teal-600 cursor-pointer"
               >
                 <option value="ALL">All Types (17)</option>
                 <option value="inoculated">Inoculated Only (7)</option>
@@ -176,39 +194,41 @@ export const DatasetView: React.FC<DatasetViewProps> = ({ dataset }) => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs text-slate-300">
-            <thead className="bg-slate-900/80 uppercase text-[10px] text-slate-400 border-b border-slate-700">
+        <div className="overflow-x-auto rounded-xl border border-slate-200 shadow-soft-xs">
+          <table className="w-full text-left text-sm text-slate-700">
+            <thead className="bg-slate-50 uppercase text-xs font-bold text-slate-700 border-b border-slate-200 tracking-wider">
               <tr>
-                <th className="py-2.5 px-3">Product Name</th>
-                <th className="py-2.5 px-3">Product Type</th>
-                <th className="py-2.5 px-3">Shelf Life Rule</th>
-                <th className="py-2.5 px-3 text-right">Holding Cost ($/t/wk)</th>
-                <th className="py-2.5 px-3 text-right">Total Demand (t)</th>
-                <th className="py-2.5 px-3 text-right">Horizon Share (%)</th>
+                <th scope="col" className="py-3.5 px-4 sticky left-0 bg-slate-50 z-10 shadow-[1px_0_0_0_#E2E8F0]">Product Name</th>
+                <th scope="col" className="py-3.5 px-4">Product Type</th>
+                <th scope="col" className="py-3.5 px-4">Shelf Life Rule</th>
+                <th scope="col" className="py-3.5 px-4 text-right">Holding Cost ($/t/wk)</th>
+                <th scope="col" className="py-3.5 px-4 text-right">Total Demand (t)</th>
+                <th scope="col" className="py-3.5 px-4 text-right">Horizon Share (%)</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-700/40">
+            <tbody className="divide-y divide-slate-100 bg-white">
               {productTotals
                 .filter((p) => selectedType === 'ALL' || p.type === selectedType)
                 .map((p) => (
-                  <tr key={p.name} className="hover:bg-slate-700/20 transition-colors">
-                    <td className="py-2.5 px-3 font-semibold text-white">{p.name}</td>
-                    <td className="py-2.5 px-3">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium ${
+                  <tr key={p.name} className="hover:bg-slate-50 transition-colors">
+                    <td className="py-3 px-4 font-bold text-slate-900 sticky left-0 bg-white hover:bg-slate-50 z-10 shadow-[1px_0_0_0_#E2E8F0]">
+                      {p.name}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold ${
                         p.type === 'inoculated' 
-                          ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-800'
-                          : 'bg-blue-950/70 text-blue-300 border border-blue-800'
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                          : 'bg-sky-50 text-sky-800 border border-sky-200'
                       }`}>
                         {p.type}
                       </span>
                     </td>
-                    <td className="py-2.5 px-3 text-slate-400">
+                    <td className="py-3 px-4 text-slate-600 font-medium">
                       {p.type === 'inoculated' ? '2 Weeks Max (Age 0, 1, 2)' : 'Unlimited (Full Horizon)'}
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono">${p.holding_cost.toFixed(2)}</td>
-                    <td className="py-2.5 px-3 text-right font-mono font-semibold text-slate-100">{p.totalDemand.toFixed(1)}</td>
-                    <td className="py-2.5 px-3 text-right font-mono text-slate-400">{p.share}%</td>
+                    <td className="py-3 px-4 text-right font-mono text-slate-800 tabular-nums">${p.holding_cost.toFixed(2)}</td>
+                    <td className="py-3 px-4 text-right font-mono font-bold text-slate-900 tabular-nums">{p.totalDemand.toFixed(1)}</td>
+                    <td className="py-3 px-4 text-right font-mono text-slate-600 font-medium tabular-nums">{p.share}%</td>
                   </tr>
                 ))}
             </tbody>

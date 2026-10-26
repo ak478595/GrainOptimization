@@ -55,14 +55,14 @@ export function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-300">
+    <div className="min-h-screen bg-soft-base text-soft-text-primary flex flex-col selection:bg-brand-500/20 selection:text-brand-800 transition-colors">
       <Navbar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab} 
         solverAvailable={solverAvailable} 
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {activeTab === 'dashboard' && (
           <DashboardView
             dataset={dataset}
@@ -99,8 +99,8 @@ export function App() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950/40 py-4 text-center text-xs text-slate-500">
-        GrainOpt 2.0 &bull; Operations Research & MILP Optimization Platform &bull; FastAPI + PuLP (CBC) + React + Vite
+      <footer className="border-t border-soft-border/70 bg-soft-card/50 py-5 text-center text-xs text-soft-text-muted">
+        GrainOpt 2.0 &bull; Operations Research &amp; MILP Optimization Platform &bull; HiGHS WebAssembly + React + Vite &bull; Standalone Edition
       </footer>
     </div>
   );

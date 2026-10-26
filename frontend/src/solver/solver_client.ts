@@ -29,11 +29,9 @@ export class HighsSolverClient {
     }
   >();
   private data: FacilityData;
-  private validator: SolutionValidator;
 
   constructor(data: FacilityData = facilityData) {
     this.data = data;
-    this.validator = new SolutionValidator(data);
   }
 
   private initWorker(): Worker {
@@ -285,16 +283,17 @@ export class HighsSolverClient {
       total_cost: Math.round(totalCost * 100) / 100,
     };
 
-    // Independent validation
+    // Independent validation using scenario-specific demand
+    const validator = new SolutionValidator(this.data, options.demandOverride);
     const validationResult: ValidationAuditResult = isExpiry
-      ? this.validator.validateExpiry({
+      ? validator.validateExpiry({
           production: prodMap,
           shifts: shiftMap,
           waste: wasteMap,
           consumption: consumptionMap,
           objective_value: rawSol.objectiveValue,
         })
-      : this.validator.validateBaseline({
+      : validator.validateBaseline({
           production: prodMap,
           shifts: shiftMap,
           objective_value: rawSol.objectiveValue,

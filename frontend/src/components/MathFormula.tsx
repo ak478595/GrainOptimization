@@ -23,6 +23,14 @@ export const MathFormula: React.FC<MathFormulaProps> = ({ math, block = false, c
     }
   }, [math, block]);
 
-  return <span ref={containerRef} className={`${block ? 'block my-2 overflow-x-auto text-emerald-300' : 'inline text-emerald-400'} ${className}`} />;
+  return (
+    <span
+      ref={containerRef}
+      className={`${
+        block
+          ? 'block my-2.5 overflow-x-auto text-slate-900 py-1 font-normal tracking-wide'
+          : 'inline-block text-slate-800 font-normal px-0.5'
+      } ${className}`}
+    />
+  );
 };
-
